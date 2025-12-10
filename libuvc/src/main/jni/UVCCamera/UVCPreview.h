@@ -92,6 +92,12 @@ private:
 	void recycle_frame(uvc_frame_t *frame);
 	void init_pool(size_t data_bytes);
 	void clear_pool();
+// frame quality monitoring
+	volatile int mConsecutiveBrokenFrames;
+	volatile int mTotalBrokenFrames;
+	volatile int mTotalGoodFrames;
+	volatile long mLastGoodFrameTime;
+	volatile int mDroppedFrames;  // frames dropped due to queue full
 //
 	void clearDisplay();
 	static void uvc_preview_frame_callback(uvc_frame_t *frame, void *vptr_args);

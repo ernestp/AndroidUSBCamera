@@ -70,7 +70,12 @@ UVCPreview::UVCPreview(uvc_device_handle_t *devh)
 	captureQueu(NULL),
 	mFrameCallbackObj(NULL),
 	mFrameCallbackFunc(NULL),
-	callbackPixelBytes(2) {
+	callbackPixelBytes(2),
+	mConsecutiveBrokenFrames(0),
+	mTotalBrokenFrames(0),
+	mTotalGoodFrames(0),
+	mLastGoodFrameTime(0),
+	mDroppedFrames(0) {
 
 	ENTER();
 	pthread_cond_init(&preview_sync, NULL);
@@ -340,6 +345,12 @@ int UVCPreview::startPreview() {
 	int result = EXIT_FAILURE;
 	if (!isRunning()) {
 		mIsRunning = true;
+		// Reset frame quality counters
+		mConsecutiveBrokenFrames = 0;
+		mTotalBrokenFrames = 0;
+		mTotalGoodFrames = 0;
+		mLastGoodFrameTime = 0;
+		mDroppedFrames = 0;
 		pthread_mutex_lock(&preview_mutex);
 		{
 			if (LIKELY(mPreviewWindow)) {
@@ -364,6 +375,14 @@ int UVCPreview::stopPreview() {
 	ENTER();
 	bool b = isRunning();
 	if (LIKELY(b)) {
+		// Log stream quality statistics
+		if (mTotalGoodFrames > 0 || mTotalBrokenFrames > 0 || mDroppedFrames > 0) {
+			int totalReceived = mTotalGoodFrames + mTotalBrokenFrames;
+			float brokenPercent = totalReceived > 0 ? (mTotalBrokenFrames * 100.0f / totalReceived) : 0;
+			float droppedPercent = mTotalGoodFrames > 0 ? (mDroppedFrames * 100.0f / mTotalGoodFrames) : 0;
+			LOGI("UVC stream stats: good=%d, broken=%d (%.1f%%), dropped=%d (%.1f%% of good)",
+				mTotalGoodFrames, mTotalBrokenFrames, brokenPercent, mDroppedFrames, droppedPercent);
+		}
 		mIsRunning = false;
         pthread_cond_signal(&preview_sync);
         // jiangdg:fix stopview crash
@@ -403,26 +422,74 @@ int UVCPreview::stopPreview() {
 //**********************************************************************
 //
 //**********************************************************************
+// Threshold for consecutive broken frames before logging a warning
+#define BROKEN_FRAME_LOG_THRESHOLD 30
+// Threshold for consecutive broken frames that indicates severe stream degradation
+#define BROKEN_FRAME_SEVERE_THRESHOLD 100
+
 void UVCPreview::uvc_preview_frame_callback(uvc_frame_t *frame, void *vptr_args) {
 	UVCPreview *preview = reinterpret_cast<UVCPreview *>(vptr_args);
 	if UNLIKELY(!preview->isRunning() || !frame || !frame->frame_format || !frame->data || !frame->data_bytes) return;
-	if (UNLIKELY(
+	
+	// Check for broken frame
+	bool isBroken = UNLIKELY(
 		((frame->frame_format != UVC_FRAME_FORMAT_MJPEG) && (frame->actual_bytes < preview->frameBytes))
-		|| (frame->width != preview->frameWidth) || (frame->height != preview->frameHeight) )) {
-
-#if LOCAL_DEBUG
-		LOGD("broken frame!:format=%d,actual_bytes=%d/%d(%d,%d/%d,%d)",
-			frame->frame_format, frame->actual_bytes, preview->frameBytes,
-			frame->width, frame->height, preview->frameWidth, preview->frameHeight);
-#endif
+		|| (frame->width != preview->frameWidth) || (frame->height != preview->frameHeight));
+	
+	if (isBroken) {
+		preview->mConsecutiveBrokenFrames++;
+		preview->mTotalBrokenFrames++;
+		
+		// Log periodically to avoid log spam
+		if (preview->mConsecutiveBrokenFrames == BROKEN_FRAME_LOG_THRESHOLD) {
+			LOGW("UVC stream degraded: %d consecutive broken frames (total broken: %d, good: %d)",
+				preview->mConsecutiveBrokenFrames, preview->mTotalBrokenFrames, preview->mTotalGoodFrames);
+			LOGW("  frame details: format=%d, actual_bytes=%zu/%zu, size=%dx%d (expected %dx%d)",
+				frame->frame_format, frame->actual_bytes, preview->frameBytes,
+				frame->width, frame->height, preview->frameWidth, preview->frameHeight);
+		} else if (preview->mConsecutiveBrokenFrames == BROKEN_FRAME_SEVERE_THRESHOLD) {
+			LOGE("UVC stream severely degraded: %d consecutive broken frames! Stream may need restart.",
+				preview->mConsecutiveBrokenFrames);
+		} else if (preview->mConsecutiveBrokenFrames > BROKEN_FRAME_SEVERE_THRESHOLD && 
+				   (preview->mConsecutiveBrokenFrames % 500) == 0) {
+			// Log every 500 frames after severe threshold
+			LOGE("UVC stream still degraded: %d consecutive broken frames (total broken: %d)",
+				preview->mConsecutiveBrokenFrames, preview->mTotalBrokenFrames);
+		}
 		return;
 	}
+	
+	// Good frame received - reset consecutive counter and update stats
+	if (preview->mConsecutiveBrokenFrames > 0) {
+		if (preview->mConsecutiveBrokenFrames >= BROKEN_FRAME_LOG_THRESHOLD) {
+			LOGI("UVC stream recovered after %d broken frames", preview->mConsecutiveBrokenFrames);
+		}
+		preview->mConsecutiveBrokenFrames = 0;
+	}
+	preview->mTotalGoodFrames++;
+	
+	// Log USB callback FPS every 30 frames (approx 1 second at 30fps)
+	static int usbCallbackCount = 0;
+	static long usbCallbackStartMs = 0;
+	usbCallbackCount++;
+	if (usbCallbackCount == 1) {
+		struct timespec ts;
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		usbCallbackStartMs = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+	} else if (usbCallbackCount >= 30) {
+		struct timespec ts;
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		long currentMs = ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+		long elapsedMs = currentMs - usbCallbackStartMs;
+		LOGI("USB callback FPS: %d frames in %ldms (%.1f fps)", 
+			usbCallbackCount, elapsedMs, usbCallbackCount * 1000.0f / elapsedMs);
+		usbCallbackCount = 0;
+	}
+	
 	if (LIKELY(preview->isRunning())) {
 		uvc_frame_t *copy = preview->get_frame(frame->data_bytes);
 		if (UNLIKELY(!copy)) {
-#if LOCAL_DEBUG
-			LOGE("uvc_callback:unable to allocate duplicate frame!");
-#endif
+			LOGW("uvc_callback: unable to allocate duplicate frame!");
 			return;
 		}
 		uvc_error_t ret = uvc_duplicate_frame(frame, copy);
@@ -441,6 +508,12 @@ void UVCPreview::addPreviewFrame(uvc_frame_t *frame) {
 		previewFrames.put(frame);
 		frame = NULL;
 		pthread_cond_signal(&preview_sync);
+	} else if (isRunning()) {
+		// Queue is full - frame will be dropped
+		mDroppedFrames++;
+		if ((mDroppedFrames % 100) == 1) {
+			LOGW("Preview queue full, dropping frame (total dropped: %d)", mDroppedFrames);
+		}
 	}
 	pthread_mutex_unlock(&preview_mutex);
 	if (frame) {
@@ -501,6 +574,11 @@ int UVCPreview::prepare_preview(uvc_stream_ctrl_t *ctrl) {
 #if LOCAL_DEBUG
 		uvc_print_stream_ctrl(ctrl, stderr);
 #endif
+		// Log negotiated frame rate
+		int negotiatedFps = ctrl->dwFrameInterval > 0 ? 10000000 / ctrl->dwFrameInterval : 0;
+		LOGI("UVC negotiated: interval=%u (100ns), fps=%d, requested min=%d max=%d",
+			ctrl->dwFrameInterval, negotiatedFps, requestMinFps, requestMaxFps);
+		
 		uvc_frame_desc_t *frame_desc;
 		result = uvc_get_frame_desc(mDeviceHandle, ctrl, &frame_desc);
 		if (LIKELY(!result)) {
@@ -547,15 +625,63 @@ void UVCPreview::do_preview(uvc_stream_ctrl_t *ctrl) {
 #endif
 		if (frameMode) {
 			// MJPEG mode
+			int processedFrames = 0;
+			long totalDecodeTimeMs = 0;
+			long totalDrawTimeMs = 0;
+			struct timespec ts_start, ts_decode, ts_draw;
+			
+			// FPS tracking
+			int nativeFpsCount = 0;
+			long nativeFpsStartMs = 0;
+			struct timespec ts_fps;
+			clock_gettime(CLOCK_MONOTONIC, &ts_fps);
+			nativeFpsStartMs = ts_fps.tv_sec * 1000 + ts_fps.tv_nsec / 1000000;
+			
 			for ( ; LIKELY(isRunning()) ; ) {
 				frame_mjpeg = waitPreviewFrame();
 				if (LIKELY(frame_mjpeg)) {
+					clock_gettime(CLOCK_MONOTONIC, &ts_start);
+					
 					frame = get_frame(frame_mjpeg->width * frame_mjpeg->height * 2);
 					result = uvc_mjpeg2yuyv(frame_mjpeg, frame);   // MJPEG => yuyv
 					recycle_frame(frame_mjpeg);
+					
+					clock_gettime(CLOCK_MONOTONIC, &ts_decode);
+					
 					if (LIKELY(!result)) {
 						frame = draw_preview_one(frame, &mPreviewWindow, uvc_any2rgbx, 4);
+						
+						clock_gettime(CLOCK_MONOTONIC, &ts_draw);
+						
 						addCaptureFrame(frame);
+						
+						// Accumulate timing stats
+						processedFrames++;
+						long decodeMs = (ts_decode.tv_sec - ts_start.tv_sec) * 1000 + 
+						               (ts_decode.tv_nsec - ts_start.tv_nsec) / 1000000;
+						long drawMs = (ts_draw.tv_sec - ts_decode.tv_sec) * 1000 + 
+						             (ts_draw.tv_nsec - ts_decode.tv_nsec) / 1000000;
+						totalDecodeTimeMs += decodeMs;
+						totalDrawTimeMs += drawMs;
+						
+						// Track native FPS
+						nativeFpsCount++;
+						clock_gettime(CLOCK_MONOTONIC, &ts_fps);
+						long currentMs = ts_fps.tv_sec * 1000 + ts_fps.tv_nsec / 1000000;
+						long elapsedMs = currentMs - nativeFpsStartMs;
+						if (elapsedMs >= 1000) {
+							LOGI("Native preview FPS: %d (processed in %ldms)", nativeFpsCount, elapsedMs);
+							nativeFpsCount = 0;
+							nativeFpsStartMs = currentMs;
+						}
+						
+						// Log every 100 frames
+						if ((processedFrames % 100) == 0) {
+							LOGI("Preview perf: %d frames, avg decode=%ldms, avg draw=%ldms, total=%ldms/frame",
+								processedFrames, totalDecodeTimeMs / processedFrames, 
+								totalDrawTimeMs / processedFrames,
+								(totalDecodeTimeMs + totalDrawTimeMs) / processedFrames);
+						}
 					} else {
 						recycle_frame(frame);
 					}
