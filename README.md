@@ -1,11 +1,16 @@
-![logo.png](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/906db02b1dbc49669c38f870b6df2e96~tplv-k3u1fbpfcp-watermark.image?)
-
+> 🚀 **Project Status**
+>
+> This repository is the **actively maintained, canonical version** of AndroidUSBCamera.
+> The original upstream project is no longer maintained.
+>
+> **Current maintainer:** [@ernestp](https://github.com/ernestp)  
+> **Repo:** https://github.com/ernestp/AndroidUSBCamera
 
 # AUSBC&ensp;[![](https://jitpack.io/v/ernestp/AndroidUSBCamera.svg)](https://jitpack.io/#ernestp/AndroidUSBCamera) [![API](https://img.shields.io/badge/API-23%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=23)
 
 &emsp;Flexible and useful UVC camera engine on Android platform, you can use it to simply  open your uvc camera (supporting multi-road cameras) without  any system permissions . The only thing you should do is that confirming your Android device must support OTG function. So, welcome to use **AUSBC3.0** and welcome to **star** & **fork** & **issues**!
 
-&emsp;This project is fork of [jiangdongguo/AndroidUSBCamera](https://github.com/jiangdongguo/AndroidUSBCamera).
+&emsp;This project originated from [jiangdongguo/AndroidUSBCamera](https://github.com/jiangdongguo/AndroidUSBCamera) and is now independently maintained and actively developed.
 
 ![multi-road camera](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/75a8f700d97c4de4979c9d0927764af9~tplv-k3u1fbpfcp-watermark.image?)
 
@@ -317,14 +322,8 @@ Q & A
 [FAQ](https://github.com/ernestp/AndroidUSBCamera/blob/master/FAQ.md)
 
 
-Homepage & Help
+## Community & Updates
 -------
-
-[1. JUEJIN](https://juejin.cn/user/1311062343296222)
-
-[2. CSDN（Update stopped）](https://blog.csdn.net/andrexpert)
-
-
 
 &emsp;If you have any question or fun ideas, please file issue on GitHub as [feature].  
  
@@ -332,6 +331,14 @@ Homepage & Help
 &emsp;So, do not forget to send logs from location **Android/data/com.jiangdg.ausbc/files** and collect logcat information by executing command `adb shell logcat -v threadtime > usbcamera.log`
 
 
+Maintenance
+-----------
+
+This project is actively maintained by the community under the stewardship of [@ernestp](https://github.com/ernestp).
+Bug reports and pull requests are welcome.
+
+If you are using this library in production and need fixes or improvements,
+please open an issue with detailed logs.
 
 Thanks
 -------
@@ -346,7 +353,8 @@ License
 -------
 
 ```c
-Copyright 2017-2023 Jiangdongguo
+Copyright © 2017-2023 Jiangdongguo
+Copyright © 2025-present Ernest Poletaev and contributors
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
