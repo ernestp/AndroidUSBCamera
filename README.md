@@ -1,16 +1,26 @@
-> 🚀 **Project Status**
->
-> This repository is the **actively maintained, canonical version** of AndroidUSBCamera.
-> The original upstream project is no longer maintained.
->
-> **Current maintainer:** [@ernestp](https://github.com/ernestp)  
-> **Repo:** https://github.com/ernestp/AndroidUSBCamera
+# AUSBC - Android USB Camera
 
-# AUSBC&ensp;[![](https://jitpack.io/v/ernestp/AndroidUSBCamera.svg)](https://jitpack.io/#ernestp/AndroidUSBCamera) [![API](https://img.shields.io/badge/API-23%2B-brightgreen.svg?style=flat)](https://android-arsenal.com/api?level=23)
+[![GitHub last commit](https://img.shields.io/github/last-commit/ernestp/AndroidUSBCamera?style=flat-square)](https://github.com/ernestp/AndroidUSBCamera/commits/master)
+[![GitHub issues](https://img.shields.io/github/issues/ernestp/AndroidUSBCamera?style=flat-square)](https://github.com/ernestp/AndroidUSBCamera/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/ernestp/AndroidUSBCamera?style=flat-square)](https://github.com/ernestp/AndroidUSBCamera/pulls)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/ernestp/AndroidUSBCamera?style=flat-square)](https://github.com/ernestp/AndroidUSBCamera/releases)
+[![License](https://img.shields.io/github/license/ernestp/AndroidUSBCamera?style=flat-square)](LICENSE)
+[![JitPack](https://jitpack.io/v/ernestp/AndroidUSBCamera.svg)](https://jitpack.io/#ernestp/AndroidUSBCamera)
 
-&emsp;Flexible and useful UVC camera engine on Android platform, you can use it to simply  open your uvc camera (supporting multi-road cameras) without  any system permissions . The only thing you should do is that confirming your Android device must support OTG function. So, welcome to use **AUSBC3.0** and welcome to **star** & **fork** & **issues**!
+Flexible and useful UVC camera engine for Android. Easily open your UVC camera (supports multi-camera setups) without system permissions—just ensure your device has USB OTG support.
 
-&emsp;This project originated from [jiangdongguo/AndroidUSBCamera](https://github.com/jiangdongguo/AndroidUSBCamera) and is now independently maintained and actively developed.
+This is the **actively maintained, canonical fork** of the original AndroidUSBCamera project. It upgraded to latest Android SDK, Gradle and NDK, fixed permission issues and improved reliability. Stars, forks, issues, and PRs are welcome!
+
+- **Latest Release**: v3.4.5 (includes AUSBC APK demo) – [Download here](https://github.com/ernestp/AndroidUSBCamera/releases/latest)
+- **API Support**: 23+
+- **License**: Apache 2.0
+
+## 🚀 Project Status (Updated March 2026)
+This repo is **actively developed and maintained** by @ernestp and contributors.
+- Recent highlights: Compatibility with **Android 16** and **16K page size**, fixed permission issues and reliability issues.
+- Original upstream [jiangdongguo/AndroidUSBCamera](https://github.com/jiangdongguo/AndroidUSBCamera) is no longer actively maintained (last commit: Sep 2024; last release: Feb 2023).
+
+&nbsp;
 
 ![multi-road camera](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/75a8f700d97c4de4979c9d0927764af9~tplv-k3u1fbpfcp-watermark.image?)
 
@@ -308,13 +318,13 @@ dependencies {
 Demo
 -------
 
-&emsp;[AUSBC.apk](https://github.com/ernestp/AndroidUSBCamera/releases/download/3.4.0/ausbc-3.4.0.apk)
+&emsp;[AUSBC.apk](https://github.com/ernestp/AndroidUSBCamera/releases/download/3.4.5/ausbc-3.4.5.apk)
 
 
 Version
 -------
 
-[Update details](https://github.com/ernestp/AndroidUSBCamera/blob/master/VERSION.md)
+[Update details](https://github.com/ernestp/AndroidUSBCamera/releases)
 
 Q & A
 -------
