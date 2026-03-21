@@ -115,7 +115,7 @@ public class UVCCamera {
 	private static boolean isLoaded;
 	static {
 		if (!isLoaded) {
-			System.loadLibrary("jpeg-turbo1500");
+			System.loadLibrary("jpeg-turbo3130");
 			System.loadLibrary("usb100");
 			System.loadLibrary("uvc");
 			System.loadLibrary("UVCCamera");
