@@ -4,7 +4,7 @@
 LOCAL_PATH		:= $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE    := jpeg-turbo3130_static
+LOCAL_MODULE    := jpeg-turbo313_static
 
 LOCAL_C_INCLUDES := \
         $(LOCAL_PATH)/src \
@@ -259,7 +259,7 @@ LOCAL_DISABLE_FATAL_LINKER_WARNINGS := true
 include $(BUILD_STATIC_LIBRARY)
 
 ######################################################################
-# jpeg-turbo3130.so
+# jpeg-turbo313.so
 ######################################################################
 include $(CLEAR_VARS)
 LOCAL_EXPORT_C_INCLUDES := \
@@ -269,8 +269,8 @@ LOCAL_DISABLE_FATAL_LINKER_WARNINGS := true
 
 LOCAL_LDLIBS := -L$(SYSROOT)/usr/lib -ldl
 
-LOCAL_WHOLE_STATIC_LIBRARIES = jpeg-turbo3130_static
+LOCAL_WHOLE_STATIC_LIBRARIES = jpeg-turbo313_static
 
-LOCAL_MODULE := jpeg-turbo3130
+LOCAL_MODULE := jpeg-turbo313
 include $(BUILD_SHARED_LIBRARY)
 
