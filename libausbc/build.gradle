@@ -43,7 +43,7 @@ dependencies {
     implementation "androidx.appcompat:appcompat:${androidXVersion}"
     implementation "androidx.constraintlayout:constraintlayout:${constraintlayoutVersion}"
     implementation "com.google.android.material:material:${materialVersion}"
-    api 'com.elvishew:xlog:1.11.0'
+    api 'com.elvishew:xlog:1.11.1'
     implementation project(path: ':libuvc')
     api project(path: ':libnative')
 }
