@@ -6,8 +6,8 @@ buildscript {
         maven { url "https://jitpack.io" }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.12.2'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.20'
+        classpath 'com.android.tools.build:gradle:9.1.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10'
     }
 }
 
