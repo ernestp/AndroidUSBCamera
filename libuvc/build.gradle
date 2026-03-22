@@ -55,7 +55,7 @@ android {
 dependencies {
 	implementation fileTree(dir: new File(buildDir, 'libs'), include: '*.jar')
 	implementation "androidx.appcompat:appcompat:${androidXVersion}"
-	implementation 'com.elvishew:xlog:1.11.0'
+	implementation 'com.elvishew:xlog:1.11.1'
 }
 
 afterEvaluate {
