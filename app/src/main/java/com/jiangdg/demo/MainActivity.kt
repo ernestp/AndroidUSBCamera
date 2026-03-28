@@ -118,11 +118,10 @@ class MainActivity : AppCompatActivity() {
                     return
                 }
 
-                val hasStoragePermission =
-                    PermissionChecker.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
+                val hasStoragePermission = checkStoragePermission()
                 if (hasStoragePermission == PermissionChecker.PERMISSION_DENIED) {
                     ToastUtils.show(R.string.permission_tip)
-                   // return
+                    return
                 }
 
 //                replaceDemoFragment(DemoMultiCameraFragment())
