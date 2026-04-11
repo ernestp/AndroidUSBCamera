@@ -22,13 +22,7 @@
 # * Files in the jni/libjpeg, jni/libusb, jin/libuvc, jni/rapidjson folder may have a different license, see the respective files.
 #*/
 
-# This is just for mips, if you really needs MSA, un-comment and build with GCC.
-# Note: Supporting GCC on NDK is already deprecated and GCC will be removed from NDK soon.
-#NDK_TOOLCHAIN_VERSION := 4.9
-
 APP_PLATFORM := android-23
-APP_ABI := arm64-v8a armeabi-v7a
-# /* if you want x86 or x86_64, please upgrade libjpeg-turbo with version that support PIC */
-#APP_ABI := arm64-v8a armeabi-v7a x86 x86_64
+APP_ABI := arm64-v8a armeabi-v7a x86 x86_64
 #APP_OPTIM := debug
 APP_OPTIM := release
