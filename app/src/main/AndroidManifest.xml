@@ -28,6 +28,7 @@
         android:roundIcon="@mipmap/ic_logo"
         android:theme="@style/Theme.ClinkCameraDemo"
         android:requestLegacyExternalStorage="true"
+        android:largeHeap="true"
         android:supportsRtl="true">
 
         <activity
