@@ -14,3 +14,4 @@ libuvccommon/build
 libuvc/src/main/libs
 .vscode/settings.json
 app/release/
+.history/
