@@ -19,9 +19,11 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
+import android.media.MediaScannerConnection
 import android.opengl.EGLContext
 import android.os.*
 import android.provider.MediaStore
+import android.util.Log
 import android.view.Surface
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
@@ -428,6 +430,8 @@ class RenderManager(
         mMainHandler.post {
             mCaptureDataCb?.onBegin()
         }
+        val dir = File(mCameraDir)
+        if(!dir.exists()) dir.mkdir()
         val date = mDateFormat.format(System.currentTimeMillis())
         val title = savePath ?: "IMG_AUSBC_$date"
         val displayName = savePath ?: "$title.jpg"
@@ -465,14 +469,28 @@ class RenderManager(
             mCaptureState.set(false)
             return
         }
-        val values = ContentValues()
-        values.put(MediaStore.Images.ImageColumns.TITLE, title)
-        values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
-        values.put(MediaStore.Images.ImageColumns.DATA, path)
-        values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
-        values.put(MediaStore.Images.ImageColumns.WIDTH, width)
-        values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
-        mContext.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+//        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+//        val values = ContentValues()
+//        values.put(MediaStore.Images.ImageColumns.TITLE, title)
+//        values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
+//        values.put(MediaStore.Images.ImageColumns.DATA, path)
+//        values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
+//        values.put(MediaStore.Images.ImageColumns.WIDTH, width)
+//        values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
+//        mContext.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+//        } else {
+//            MediaScannerConnection.scanFile(mContext, arrayOf(path), null) { _, uri ->
+//                if (uri != null) {
+//                    val values = ContentValues()
+//                    values.put(MediaStore.Images.ImageColumns.TITLE, title)
+//                    values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
+//                    values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
+//                    values.put(MediaStore.Images.ImageColumns.WIDTH, width)
+//                    values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
+//                    mContext.contentResolver?.update(uri, values, null, null)
+//                }
+//            }
+//        }
         mMainHandler.post {
             mCaptureDataCb?.onComplete(path)
         }

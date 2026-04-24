@@ -89,16 +89,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun permissionList(): Array<String> {
-        return if(Build.VERSION.SDK_INT >= 30) {
-            arrayOf(CAMERA, RECORD_AUDIO) // WRITE_EXTERNAL_STORAGE deprecated
+        return if(Build.VERSION.SDK_INT >= 33) {
+            arrayOf(CAMERA, RECORD_AUDIO, READ_MEDIA_IMAGES) // WRITE_EXTERNAL_STORAGE deprecated
         } else {
             arrayOf(CAMERA, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)
         }
     }
 
     private fun checkStoragePermission(): Int {
-        return if(Build.VERSION.SDK_INT >= 30) {
-            0 // WRITE_EXTERNAL_STORAGE deprecated
+        return if(Build.VERSION.SDK_INT >= 33) {
+            PermissionChecker.checkSelfPermission(this, READ_MEDIA_IMAGES)
         } else {
             PermissionChecker.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
         }

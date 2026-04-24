@@ -10,6 +10,8 @@
     <uses-feature android:name="android.hardware.camera"/>
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
 
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
     <!--bugly permission need-->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

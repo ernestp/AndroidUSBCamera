@@ -263,6 +263,8 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             mMainHandler.post {
                 callback.onBegin()
             }
+            val dir = File(mCameraDir)
+            if(!dir.exists()) dir.mkdir()
             val date = mDateFormat.format(System.currentTimeMillis())
             val title = savePath ?: "IMG_AUSBC_$date"
             val displayName = savePath ?: "$title.jpg"
@@ -282,14 +284,14 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 Logger.w(TAG, "save yuv to jpeg failed.")
                 return@submit
             }
-            val values = ContentValues()
-            values.put(MediaStore.Images.ImageColumns.TITLE, title)
-            values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
-            values.put(MediaStore.Images.ImageColumns.DATA, path)
-            values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
-            values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
-            values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
-            ctx.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+//            val values = ContentValues()
+//            values.put(MediaStore.Images.ImageColumns.TITLE, title)
+//            values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
+//            values.put(MediaStore.Images.ImageColumns.DATA, path)
+//            values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
+//            values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
+//            values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
+//            ctx.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
             mMainHandler.post {
                 callback.onComplete(path)
             }
