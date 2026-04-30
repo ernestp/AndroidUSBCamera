@@ -530,7 +530,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
          * @param callBack record status, see [ICaptureCallBack]
          */
         fun captureAudioStart(callBack: ICaptureCallBack, mp3Path: String?=null) {
-            if (! CameraUtils.hasAudioPermission(mContext)) {
+            if (mp3Path.isNullOrEmpty() && !CameraUtils.hasAudioPermission(mContext)) {
                 callBack.onError("Has no audio permission")
                 return
             }
