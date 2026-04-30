@@ -19,6 +19,8 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
+import android.media.MediaScannerConnection
+import android.os.Build
 import android.provider.MediaStore
 import android.view.Surface
 import android.view.SurfaceView
@@ -242,7 +244,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 mMainHandler.post {
                     callback.onError("have no storage permission")
                 }
-                Logger.e(TAG,"open camera failed, have no storage permission")
+                Logger.e(TAG,"captureImageInternal failed, have no storage permission")
                 return@submit
             }
             if (! isPreviewed) {
@@ -263,8 +265,10 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             mMainHandler.post {
                 callback.onBegin()
             }
+            val dir = File(mCameraDir)
+            if(!dir.exists()) dir.mkdirs()
             val date = mDateFormat.format(System.currentTimeMillis())
-            val title = savePath ?: "IMG_AUSBC_$date"
+            val title = savePath ?: "IMG_$date"
             val displayName = savePath ?: "$title.jpg"
             val path = savePath ?: "$mCameraDir/$displayName"
             val location = Utils.getGpsLocation(ctx)
@@ -285,11 +289,20 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
             val values = ContentValues()
             values.put(MediaStore.Images.ImageColumns.TITLE, title)
             values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
-            values.put(MediaStore.Images.ImageColumns.DATA, path)
+//            values.put(MediaStore.Images.ImageColumns.DATA, path)
             values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
             values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
             values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
-            ctx.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            values.put(MediaStore.Images.ImageColumns.WIDTH, width)
+            values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                MediaScannerConnection.scanFile(ctx, arrayOf(path), null) { _, uri ->
+                    ctx.contentResolver?.update(uri, values, null, null)
+                }
+            } else {
+                values.put(MediaStore.Images.ImageColumns.DATA, path)
+                ctx.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            }
             mMainHandler.post {
                 callback.onComplete(path)
             }
@@ -430,11 +443,11 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
      * Get brightness
      */
     fun getBrightness() = mUvcCamera?.brightness
-    
+
     fun getBrightnessMax() = mUvcCamera?.brightnessMax
 
     fun getBrightnessMin() = mUvcCamera?.brightnessMin
-    
+
     /**
      * Reset brightnes
      */

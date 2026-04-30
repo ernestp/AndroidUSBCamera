@@ -19,12 +19,14 @@ import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
+import android.media.MediaScannerConnection
 import android.opengl.EGLContext
 import android.os.*
 import android.provider.MediaStore
 import android.view.Surface
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
+import com.jiangdg.ausbc.camera.CameraUVC
 import com.jiangdg.ausbc.render.env.RotateType
 import com.jiangdg.ausbc.render.effect.AbstractEffect
 import com.jiangdg.ausbc.render.internal.*
@@ -93,7 +95,7 @@ class RenderManager(
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
     }
     private val mCameraDir by lazy {
-        "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera"
+        "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/UsbCamera"
     }
 
     init {
@@ -421,6 +423,13 @@ class RenderManager(
     }
 
     private fun saveImageInternal(savePath: String?) {
+        if (! CameraUtils.hasStoragePermission(mContext)) {
+            mMainHandler.post {
+                mCaptureDataCb?.onError("have no storage permission")
+            }
+            Logger.e(TAG,"have no storage permission")
+            return
+        }
         if (mCaptureState.get()) {
             return
         }
@@ -428,8 +437,10 @@ class RenderManager(
         mMainHandler.post {
             mCaptureDataCb?.onBegin()
         }
+        val dir = File(mCameraDir)
+        if(!dir.exists()) dir.mkdirs()
         val date = mDateFormat.format(System.currentTimeMillis())
-        val title = savePath ?: "IMG_AUSBC_$date"
+        val title = savePath ?: "IMG_$date"
         val displayName = savePath ?: "$title.jpg"
         val path = savePath ?: "$mCameraDir/$displayName"
         val width = mWidth
@@ -468,11 +479,18 @@ class RenderManager(
         val values = ContentValues()
         values.put(MediaStore.Images.ImageColumns.TITLE, title)
         values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
-        values.put(MediaStore.Images.ImageColumns.DATA, path)
+//        values.put(MediaStore.Images.ImageColumns.DATA, path)
         values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
         values.put(MediaStore.Images.ImageColumns.WIDTH, width)
         values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
-        mContext.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            MediaScannerConnection.scanFile(mContext, arrayOf(path), null) { _, uri ->
+                mContext.contentResolver?.update(uri, values, null, null)
+            }
+        } else {
+            values.put(MediaStore.Images.ImageColumns.DATA, path)
+            mContext.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        }
         mMainHandler.post {
             mCaptureDataCb?.onComplete(path)
         }

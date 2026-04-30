@@ -7,6 +7,7 @@ import android.hardware.usb.UsbDevice
 import android.os.*
 import android.view.Surface
 import com.jiangdg.ausbc.callback.*
+import com.jiangdg.ausbc.camera.CameraUVC
 import com.jiangdg.ausbc.camera.bean.CameraRequest
 import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.encode.AACEncodeProcessor
@@ -31,6 +32,7 @@ import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.usb.*
 import com.jiangdg.usb.DeviceFilter
 import com.jiangdg.uvc.UVCCamera
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -303,7 +305,10 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
         }
         protected val mCameraDir by lazy {
-            "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera"
+            "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/UsbCamera"
+        }
+        protected val mCameraAudioDir by lazy {
+            "${ctx.getExternalFilesDir(Environment.DIRECTORY_MUSIC)}"
         }
 
         override fun handleMessage(msg: Message): Boolean {
@@ -534,7 +539,10 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 return
             }
             val path = if (mp3Path.isNullOrEmpty()) {
-                "${mContext.getExternalFilesDir(null)?.path}/${System.currentTimeMillis()}.mp3"
+                val dir = File(mCameraAudioDir)
+                if(!dir.exists()) dir.mkdirs()
+                val date = mDateFormat.format(System.currentTimeMillis())
+                "$mCameraAudioDir/AUD_${date}.mp3"
             } else {
                 mp3Path
             }
@@ -910,11 +918,24 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         private fun isEncoding(): Boolean = mVideoProcess?.isEncoding() == true
 
         private fun captureVideoStartInternal(path: String?, durationInSec: Long, callBack: ICaptureCallBack) {
+            if (! CameraUtils.hasStoragePermission(ctx)) {
+                mMainHandler.post {
+                    callBack.onError("have no storage permission")
+                }
+                Logger.e(TAG,"capture video failed, have no storage permission")
+                return
+            }
             if (! isCameraOpened()) {
+                mMainHandler.post {
+                    callBack.onError("capture video failed, camera not opened")
+                }
                 Logger.e(TAG ,"capture video failed, camera not opened")
                 return
             }
             if (isRecording()) {
+                mMainHandler.post {
+                    callBack.onError("capturing video already running")
+                }
                 Logger.w(TAG, "capturing video already running")
                 return
             }

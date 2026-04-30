@@ -21,11 +21,13 @@ import android.media.MediaCodec
 import android.media.MediaFormat
 import android.media.MediaMetadataRetriever
 import android.media.MediaMuxer
+import android.media.MediaScannerConnection
 import android.os.Environment
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
 import android.text.format.DateUtils
+import android.util.Log
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.MediaUtils
@@ -73,17 +75,19 @@ class Mp4Muxer(
     private val mDateFormat by lazy {
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
     }
-    private val mCameraDir by lazy {
-        "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera"
+    private val mCameraVideoDir by lazy {
+        "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/UsbCamera"
     }
 
     init {
         this.mCaptureCallBack = callBack
         this.mContext= context
         try {
+            val dir = File(mCameraVideoDir)
+            if(!dir.exists()) dir.mkdirs()
             if (path.isNullOrEmpty()) {
                 val date = mDateFormat.format(System.currentTimeMillis())
-                path = "$mCameraDir/VID_JJCamera_$date"
+                path = "$mCameraVideoDir/VID_$date"
             }
             mOriginalPath = path
             path = "${path}.mp4"
@@ -248,9 +252,17 @@ class Mp4Muxer(
             if (videoPath.isNullOrEmpty()) {
                 return
             }
+            Log.d(TAG, "insertDCIM: $videoPath")
             ctx.contentResolver.let { content ->
-                val uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-                content.insert(uri, getVideoContentValues(videoPath))
+                val values = getVideoContentValues(videoPath)
+                if (MediaUtils.isAboveQ()) {
+                    MediaScannerConnection.scanFile(ctx, arrayOf(videoPath), null) { _, uri ->
+                        content.update(uri, values, null, null)
+                    }
+                } else {
+                    values.put(MediaStore.Video.Media.DATA, videoPath)
+                    content.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
+                }
                 mMainHandler.post {
                     mCaptureCallBack?.onComplete(this.path)
                 }
@@ -261,15 +273,12 @@ class Mp4Muxer(
     private fun getVideoContentValues(path: String): ContentValues {
         val file = File(path)
         val values = ContentValues()
-        values.put(MediaStore.Video.Media.DATA, path)
         values.put(MediaStore.Video.Media.DISPLAY_NAME, file.name)
         values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
         values.put(MediaStore.Video.Media.SIZE, file.length())
         values.put(MediaStore.Video.Media.DURATION, getLocalVideoDuration(file.path))
         if (MediaUtils.isAboveQ()) {
-            val relativePath =  "${Environment.DIRECTORY_DCIM}${File.separator}Camera"
             val dateExpires = (System.currentTimeMillis() + DateUtils.DAY_IN_MILLIS) / 1000
-            values.put(MediaStore.Video.Media.RELATIVE_PATH, relativePath)
             values.put(MediaStore.Video.Media.DATE_EXPIRES, dateExpires)
         }
         return values

@@ -89,16 +89,21 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun permissionList(): Array<String> {
-        return if(Build.VERSION.SDK_INT >= 30) {
-            arrayOf(CAMERA, RECORD_AUDIO) // WRITE_EXTERNAL_STORAGE deprecated
+        return if(Build.VERSION.SDK_INT >= 33) {
+            arrayOf(CAMERA, RECORD_AUDIO, READ_MEDIA_IMAGES)
         } else {
             arrayOf(CAMERA, RECORD_AUDIO, WRITE_EXTERNAL_STORAGE)
         }
     }
 
     private fun checkStoragePermission(): Int {
-        return if(Build.VERSION.SDK_INT >= 30) {
-            0 // WRITE_EXTERNAL_STORAGE deprecated
+        return if(Build.VERSION.SDK_INT >= 33) {
+            // READ_MEDIA_IMAGES can save /DCIM/, /Pictures/
+            // image save to /DCIM/UsbCamera,
+            // video save to /DCIM/UsbCamera,
+            // audio save to /Android/data/packageName/files/Music/,
+            // perfect
+            PermissionChecker.checkSelfPermission(this, READ_MEDIA_IMAGES)
         } else {
             PermissionChecker.checkSelfPermission(this, WRITE_EXTERNAL_STORAGE)
         }
