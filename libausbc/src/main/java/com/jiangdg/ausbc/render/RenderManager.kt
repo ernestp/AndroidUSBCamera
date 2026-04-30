@@ -423,7 +423,7 @@ class RenderManager(
     }
 
     private fun saveImageInternal(savePath: String?) {
-        if (! CameraUtils.hasStoragePermission(mContext)) {
+        if (savePath.isNullOrEmpty() && ! CameraUtils.hasStoragePermission(mContext)) {
             mMainHandler.post {
                 mCaptureDataCb?.onError("have no storage permission")
             }
@@ -474,6 +474,16 @@ class RenderManager(
             Logger.e(TAG, "Failed to save file $path")
             file.delete()
             mCaptureState.set(false)
+            return
+        }
+        if(savePath.isNullOrEmpty()){
+            mMainHandler.post {
+                mCaptureDataCb?.onComplete(path)
+            }
+            mCaptureState.set(false)
+            if (Utils.debugCamera) {
+                Logger.i(TAG, "captureImageInternal save path = $path")
+            }
             return
         }
         val values = ContentValues()

@@ -33,6 +33,7 @@ import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
 import com.jiangdg.ausbc.camera.bean.CameraRequest
 import com.jiangdg.ausbc.camera.bean.PreviewSize
+import com.jiangdg.ausbc.render.RenderManager
 import com.jiangdg.ausbc.utils.CameraUtils
 import com.jiangdg.ausbc.utils.Logger
 import com.jiangdg.ausbc.utils.MediaUtils
@@ -240,7 +241,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
 
     override fun captureImageInternal(savePath: String?, callback: ICaptureCallBack) {
         mSaveImageExecutor.submit {
-            if (! CameraUtils.hasStoragePermission(ctx)) {
+            if (savePath.isNullOrEmpty() && !CameraUtils.hasStoragePermission(ctx)) {
                 mMainHandler.post {
                     callback.onError("have no storage permission")
                 }
@@ -284,6 +285,13 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                     callback.onError("save yuv to jpeg failed.")
                 }
                 Logger.w(TAG, "save yuv to jpeg failed.")
+                return@submit
+            }
+            if(savePath.isNullOrEmpty()){
+                mMainHandler.post {
+                    callback.onComplete(path)
+                }
+                if (Utils.debugCamera) { Logger.i(TAG, "captureImageInternal save path = $path") }
                 return@submit
             }
             val values = ContentValues()

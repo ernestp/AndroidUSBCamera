@@ -534,7 +534,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 callBack.onError("Has no audio permission")
                 return
             }
-            if (! CameraUtils.hasStoragePermission(mContext)) {
+            if (mp3Path.isNullOrEmpty() && !CameraUtils.hasStoragePermission(mContext)) {
                 callBack.onError("Has no storage permission")
                 return
             }
@@ -918,7 +918,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         private fun isEncoding(): Boolean = mVideoProcess?.isEncoding() == true
 
         private fun captureVideoStartInternal(path: String?, durationInSec: Long, callBack: ICaptureCallBack) {
-            if (! CameraUtils.hasStoragePermission(ctx)) {
+            if (path.isNullOrEmpty() && !CameraUtils.hasStoragePermission(ctx)) {
                 mMainHandler.post {
                     callBack.onError("have no storage permission")
                 }

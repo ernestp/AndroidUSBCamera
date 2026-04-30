@@ -70,6 +70,7 @@ class Mp4Muxer(
     private var mCaptureCallBack: ICaptureCallBack? = null
     private var mMainHandler: Handler = Handler(Looper.getMainLooper())
     private var mOriginalPath: String? = null
+    private var savePath: String? = null
     private var mVideoPts: Long = 0L
     private var mAudioPts: Long = 0L
     private val mDateFormat by lazy {
@@ -82,6 +83,7 @@ class Mp4Muxer(
     init {
         this.mCaptureCallBack = callBack
         this.mContext= context
+        this.savePath= path
         try {
             val dir = File(mCameraVideoDir)
             if(!dir.exists()) dir.mkdirs()
@@ -248,6 +250,9 @@ class Mp4Muxer(
     fun getSavePath() = path
 
     private fun insertDCIM(context: Context?, videoPath: String?, notifyOut: Boolean = false) {
+        if (savePath.isNullOrEmpty()) {
+            return
+        }
         context?.let { ctx ->
             if (videoPath.isNullOrEmpty()) {
                 return
