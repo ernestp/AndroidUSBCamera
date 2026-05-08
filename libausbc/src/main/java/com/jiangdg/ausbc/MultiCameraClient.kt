@@ -534,12 +534,19 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                 callBack.onError("Has no audio permission")
                 return
             }
-            if (! CameraUtils.hasStoragePermission(mContext)) {
-                callBack.onError("Has no storage permission")
-                return
+            if (mp3Path.isNullOrEmpty()) {
+                File(mCameraAudioDir).apply { if(!exists()) mkdirs() }
+                if (!MediaUtils.isAboveQ()) {
+                    if (!CameraUtils.hasStoragePermission(mContext)) {
+                        callBack.onError("Has no storage permission")
+                        Logger.e(TAG,"captureAudioStart failed, have no storage permission")
+                        return
+                    }
+                }
             }
             val path = if (mp3Path.isNullOrEmpty()) {
-                "${mContext.getExternalFilesDir(null)?.path}/${System.currentTimeMillis()}.mp3"
+                val date = mDateFormat.format(System.currentTimeMillis())
+                "$mCameraAudioDir/AUD_AUSBC_${date}.mp3"
             } else {
                 mp3Path
             }
