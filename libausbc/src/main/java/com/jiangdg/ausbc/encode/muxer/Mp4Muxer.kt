@@ -28,6 +28,7 @@ import android.provider.MediaStore
 import android.text.format.DateUtils
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.utils.Logger
+import com.jiangdg.ausbc.utils.MediaStoreUtils
 import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.Utils
 import java.io.File
@@ -68,13 +69,17 @@ class Mp4Muxer(
     private var mCaptureCallBack: ICaptureCallBack? = null
     private var mMainHandler: Handler = Handler(Looper.getMainLooper())
     private var mOriginalPath: String? = null
+    private var mPathEmpty: Boolean = path.isNullOrEmpty()
     private var mVideoPts: Long = 0L
     private var mAudioPts: Long = 0L
     private val mDateFormat by lazy {
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
     }
     private val mCameraDir by lazy {
-        "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera"
+        "${mContext!!.getExternalFilesDir(Environment.DIRECTORY_DCIM)}/Camera"
+    }
+    private val mCameraAudioDir by lazy {
+        "${mContext!!.getExternalFilesDir(Environment.DIRECTORY_MUSIC)}/Camera"
     }
 
     init {
@@ -248,33 +253,12 @@ class Mp4Muxer(
             if (videoPath.isNullOrEmpty()) {
                 return
             }
-            ctx.contentResolver.let { content ->
-                val uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-                content.insert(uri, getVideoContentValues(videoPath))
+                if(mPathEmpty) MediaStoreUtils.saveMediaStore(File(videoPath), context)
                 mMainHandler.post {
                     mCaptureCallBack?.onComplete(this.path)
                 }
-            }
         }
     }
-
-    private fun getVideoContentValues(path: String): ContentValues {
-        val file = File(path)
-        val values = ContentValues()
-        values.put(MediaStore.Video.Media.DATA, path)
-        values.put(MediaStore.Video.Media.DISPLAY_NAME, file.name)
-        values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-        values.put(MediaStore.Video.Media.SIZE, file.length())
-        values.put(MediaStore.Video.Media.DURATION, getLocalVideoDuration(file.path))
-        if (MediaUtils.isAboveQ()) {
-            val relativePath =  "${Environment.DIRECTORY_DCIM}${File.separator}Camera"
-            val dateExpires = (System.currentTimeMillis() + DateUtils.DAY_IN_MILLIS) / 1000
-            values.put(MediaStore.Video.Media.RELATIVE_PATH, relativePath)
-            values.put(MediaStore.Video.Media.DATE_EXPIRES, dateExpires)
-        }
-        return values
-    }
-
 
     fun isMuxerStarter() = mVideoTrackerIndex != -1 && (mAudioTrackerIndex != -1 || isVideoOnly)
 

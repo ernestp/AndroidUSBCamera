@@ -15,13 +15,11 @@
  */
 package com.jiangdg.ausbc.render
 
-import android.content.ContentValues
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
 import android.opengl.EGLContext
 import android.os.*
-import android.provider.MediaStore
 import android.view.Surface
 import com.jiangdg.ausbc.callback.ICaptureCallBack
 import com.jiangdg.ausbc.callback.IPreviewDataCallBack
