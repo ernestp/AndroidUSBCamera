@@ -20,7 +20,7 @@ import kotlin.text.split
 object MediaStoreUtils {
     private const val TAG = "MediaStoreUtils"
 
-    private fun saveMediaStore(file: File, context: Context) {
+    fun saveMediaStore(file: File, context: Context) {
         if (!file.exists()) throw Exception("no find file")
         val mimeType = MimeTypeMap.getSingleton()
             .getMimeTypeFromExtension(file.extension.lowercase(getDefault()))
@@ -34,7 +34,11 @@ object MediaStoreUtils {
             PackageManager.PERMISSION_GRANTED
         }
         if (perG != PackageManager.PERMISSION_GRANTED) {
-            throw Exception("must have WRITE_EXTERNAL_STORAGE permission")
+//            throw Exception("must have WRITE_EXTERNAL_STORAGE permission")
+            Log.w(TAG, "saveMediaStore failed, no have WRITE_EXTERNAL_STORAGE permission")
+            Log.w(TAG, "saveMediaStore failed, no have WRITE_EXTERNAL_STORAGE permission")
+            Log.w(TAG, "saveMediaStore failed, no have WRITE_EXTERNAL_STORAGE permission")
+            return
         }
         val mediaDirs =
             arrayOf(

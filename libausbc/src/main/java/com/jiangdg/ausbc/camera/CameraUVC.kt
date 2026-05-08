@@ -15,11 +15,9 @@
  */
 package com.jiangdg.ausbc.camera
 
-import android.content.ContentValues
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.usb.UsbDevice
-import android.provider.MediaStore
 import android.view.Surface
 import android.view.SurfaceView
 import android.view.TextureView
@@ -33,6 +31,7 @@ import com.jiangdg.ausbc.camera.bean.CameraRequest
 import com.jiangdg.ausbc.camera.bean.PreviewSize
 import com.jiangdg.ausbc.utils.CameraUtils
 import com.jiangdg.ausbc.utils.Logger
+import com.jiangdg.ausbc.utils.MediaStoreUtils
 import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.Utils
 import com.jiangdg.uvc.IFrameCallback
@@ -238,12 +237,17 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
 
     override fun captureImageInternal(savePath: String?, callback: ICaptureCallBack) {
         mSaveImageExecutor.submit {
-            if (! CameraUtils.hasStoragePermission(ctx)) {
-                mMainHandler.post {
-                    callback.onError("have no storage permission")
+            if (savePath.isNullOrEmpty()) {
+                File(mCameraDir).apply { if(!exists()) mkdirs() }
+                if (!MediaUtils.isAboveQ()) {
+                    if (!CameraUtils.hasStoragePermission(mContext)) {
+                        mMainHandler.post {
+                            callback.onError("have no storage permission")
+                        }
+                        Logger.e(TAG,"captureImageInternal failed, have no storage permission")
+                        return@submit
+                    }
                 }
-                Logger.e(TAG,"open camera failed, have no storage permission")
-                return@submit
             }
             if (! isPreviewed) {
                 mMainHandler.post {
@@ -264,12 +268,9 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 callback.onBegin()
             }
             val date = mDateFormat.format(System.currentTimeMillis())
-            val title = savePath ?: "IMG_AUSBC_$date"
-            val displayName = savePath ?: "$title.jpg"
-            val path = savePath ?: "$mCameraDir/$displayName"
-            val location = Utils.getGpsLocation(ctx)
             val width = mCameraRequest!!.previewWidth
             val height = mCameraRequest!!.previewHeight
+            val path = savePath ?: "$mCameraDir/IMG_AUSBC_${date}_w${width}_h${height}.jpg"
             val ret = MediaUtils.saveYuv2Jpeg(path, data, width, height)
             if (! ret) {
                 val file = File(path)
@@ -282,14 +283,7 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 Logger.w(TAG, "save yuv to jpeg failed.")
                 return@submit
             }
-            val values = ContentValues()
-            values.put(MediaStore.Images.ImageColumns.TITLE, title)
-            values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
-            values.put(MediaStore.Images.ImageColumns.DATA, path)
-            values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
-            values.put(MediaStore.Images.ImageColumns.LONGITUDE, location?.longitude)
-            values.put(MediaStore.Images.ImageColumns.LATITUDE, location?.latitude)
-            ctx.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+            if (savePath.isNullOrEmpty()) MediaStoreUtils.saveMediaStore(File(path), mContext)
             mMainHandler.post {
                 callback.onComplete(path)
             }

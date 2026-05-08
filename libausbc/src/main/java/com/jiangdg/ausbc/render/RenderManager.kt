@@ -93,7 +93,10 @@ class RenderManager(
         SimpleDateFormat("yyyyMMddHHmmssSSS", Locale.getDefault())
     }
     private val mCameraDir by lazy {
-        "${Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM)}/Camera"
+        "${mContext.getExternalFilesDir(Environment.DIRECTORY_DCIM)}/Camera"
+    }
+    private val mCameraAudioDir by lazy {
+        "${mContext.getExternalFilesDir(Environment.DIRECTORY_MUSIC)}/Camera"
     }
 
     init {
@@ -421,6 +424,18 @@ class RenderManager(
     }
 
     private fun saveImageInternal(savePath: String?) {
+        if (savePath.isNullOrEmpty()) {
+            File(mCameraDir).apply { if(!exists()) mkdirs() }
+            if (!MediaUtils.isAboveQ()) {
+                if (!CameraUtils.hasStoragePermission(mContext)) {
+                    mMainHandler.post {
+                        mCaptureDataCb?.onError("have no storage permission")
+                    }
+                    Logger.e(TAG,"saveImageInternal failed, have no storage permission")
+                    return
+                }
+            }
+        }
         if (mCaptureState.get()) {
             return
         }
@@ -429,11 +444,9 @@ class RenderManager(
             mCaptureDataCb?.onBegin()
         }
         val date = mDateFormat.format(System.currentTimeMillis())
-        val title = savePath ?: "IMG_AUSBC_$date"
-        val displayName = savePath ?: "$title.jpg"
-        val path = savePath ?: "$mCameraDir/$displayName"
         val width = mWidth
         val height = mHeight
+        val path = savePath ?: "$mCameraDir/IMG_AUSBC_${date}_w${width}_h${height}.jpg"
         // 写入文件
         // glReadPixels读取的是大端数据，但是我们保存的是小端
         // 故需要将图片上下颠倒为正
@@ -465,14 +478,7 @@ class RenderManager(
             mCaptureState.set(false)
             return
         }
-        val values = ContentValues()
-        values.put(MediaStore.Images.ImageColumns.TITLE, title)
-        values.put(MediaStore.Images.ImageColumns.DISPLAY_NAME, displayName)
-        values.put(MediaStore.Images.ImageColumns.DATA, path)
-        values.put(MediaStore.Images.ImageColumns.DATE_TAKEN, date)
-        values.put(MediaStore.Images.ImageColumns.WIDTH, width)
-        values.put(MediaStore.Images.ImageColumns.HEIGHT, height)
-        mContext.contentResolver?.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+        if (savePath.isNullOrEmpty()) MediaStoreUtils.saveMediaStore(file, mContext)
         mMainHandler.post {
             mCaptureDataCb?.onComplete(path)
         }
