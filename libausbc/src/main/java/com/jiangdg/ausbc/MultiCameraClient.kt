@@ -24,6 +24,7 @@ import com.jiangdg.ausbc.utils.CameraUtils
 import com.jiangdg.ausbc.utils.CameraUtils.isFilterDevice
 import com.jiangdg.ausbc.utils.CameraUtils.isUsbCamera
 import com.jiangdg.ausbc.utils.Logger
+import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.OpenGLUtils
 import com.jiangdg.ausbc.utils.SettableFuture
 import com.jiangdg.ausbc.utils.Utils
@@ -31,6 +32,7 @@ import com.jiangdg.ausbc.widget.IAspectRatio
 import com.jiangdg.usb.*
 import com.jiangdg.usb.DeviceFilter
 import com.jiangdg.uvc.UVCCamera
+import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
@@ -913,6 +915,18 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         private fun isEncoding(): Boolean = mVideoProcess?.isEncoding() == true
 
         private fun captureVideoStartInternal(path: String?, durationInSec: Long, callBack: ICaptureCallBack) {
+            if (path.isNullOrEmpty()) {
+                File(mCameraDir).apply { if(!exists()) mkdirs() }
+                if (!MediaUtils.isAboveQ()) {
+                    if (!CameraUtils.hasStoragePermission(mContext)) {
+                        mMainHandler.post {
+                            callBack.onError("have no storage permission")
+                        }
+                        Logger.e(TAG,"captureVideoStartInternal failed, have no storage permission")
+                        return
+                    }
+                }
+            }
             if (! isCameraOpened()) {
                 Logger.e(TAG ,"capture video failed, camera not opened")
                 return
