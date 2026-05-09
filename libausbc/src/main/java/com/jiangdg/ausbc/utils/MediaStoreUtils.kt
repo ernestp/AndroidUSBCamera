@@ -89,7 +89,7 @@ object MediaStoreUtils {
         }
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             val storePath = Environment.getExternalStoragePublicDirectory(relativePath).absolutePath
-            val appDir = File(storePath).apply {
+            val appDir = File(storePath, context.packageName).apply {
                 if (!exists()) mkdirs()
             }
             val file = File(appDir, fileName)
@@ -103,7 +103,7 @@ object MediaStoreUtils {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.Images.Media.MIME_TYPE, mimeType)
-            put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+            put(MediaStore.MediaColumns.RELATIVE_PATH, "${relativePath}/${context.packageName}")
         }
         return context.contentResolver?.insert(contentUri, contentValues)!!
     }

@@ -253,7 +253,6 @@ class Mp4Muxer(
             if (videoPath.isNullOrEmpty()) {
                 return
             }
-                if(mPathEmpty) MediaStoreUtils.saveMediaStore(File(videoPath), context)
                 mMainHandler.post {
                     mCaptureCallBack?.onComplete(this.path)
                 }

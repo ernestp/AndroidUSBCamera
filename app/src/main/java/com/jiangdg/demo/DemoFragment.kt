@@ -66,6 +66,7 @@ import com.jiangdg.demo.databinding.DialogMoreBinding
 import com.jiangdg.utils.MMKVUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.*
 
 /** CameraFragment Usage Demo
@@ -412,6 +413,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
                 mViewBinding.recTimerLayout.visibility = View.GONE
                 showRecentMedia(false)
                 stopMediaTimer()
+                MediaStoreUtils.saveMediaStore(File(path!!), requireContext())
             }
 
         })
@@ -434,6 +436,7 @@ class DemoFragment : CameraFragment(), View.OnClickListener, CaptureMediaView.On
             override fun onComplete(path: String?) {
                 showRecentMedia(true)
                 mViewBinding.albumPreviewIv.setNewImageFlag(false)
+                MediaStoreUtils.saveMediaStore(File(path!!), requireContext())
             }
         })
     }

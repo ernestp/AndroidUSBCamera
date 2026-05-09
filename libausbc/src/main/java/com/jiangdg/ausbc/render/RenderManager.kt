@@ -476,7 +476,6 @@ class RenderManager(
             mCaptureState.set(false)
             return
         }
-        if (savePath.isNullOrEmpty()) MediaStoreUtils.saveMediaStore(file, mContext)
         mMainHandler.post {
             mCaptureDataCb?.onComplete(path)
         }

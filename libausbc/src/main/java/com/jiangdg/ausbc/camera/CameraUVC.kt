@@ -283,7 +283,6 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
                 Logger.w(TAG, "save yuv to jpeg failed.")
                 return@submit
             }
-            if (savePath.isNullOrEmpty()) MediaStoreUtils.saveMediaStore(File(path), mContext)
             mMainHandler.post {
                 callback.onComplete(path)
             }
