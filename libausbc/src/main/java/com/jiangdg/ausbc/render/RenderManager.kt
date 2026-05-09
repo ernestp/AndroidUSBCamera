@@ -424,15 +424,6 @@ class RenderManager(
     private fun saveImageInternal(savePath: String?) {
         if (savePath.isNullOrEmpty()) {
             File(mCameraDir).apply { if(!exists()) mkdirs() }
-            if (!MediaUtils.isAboveQ()) {
-                if (!CameraUtils.hasStoragePermission(mContext)) {
-                    mMainHandler.post {
-                        mCaptureDataCb?.onError("have no storage permission")
-                    }
-                    Logger.e(TAG,"saveImageInternal failed, have no storage permission")
-                    return
-                }
-            }
         }
         if (mCaptureState.get()) {
             return

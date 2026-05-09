@@ -536,13 +536,6 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
             }
             if (mp3Path.isNullOrEmpty()) {
                 File(mCameraAudioDir).apply { if(!exists()) mkdirs() }
-                if (!MediaUtils.isAboveQ()) {
-                    if (!CameraUtils.hasStoragePermission(mContext)) {
-                        callBack.onError("Has no storage permission")
-                        Logger.e(TAG,"captureAudioStart failed, have no storage permission")
-                        return
-                    }
-                }
             }
             val path = if (mp3Path.isNullOrEmpty()) {
                 val date = mDateFormat.format(System.currentTimeMillis())
@@ -924,15 +917,6 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         private fun captureVideoStartInternal(path: String?, durationInSec: Long, callBack: ICaptureCallBack) {
             if (path.isNullOrEmpty()) {
                 File(mCameraDir).apply { if(!exists()) mkdirs() }
-                if (!MediaUtils.isAboveQ()) {
-                    if (!CameraUtils.hasStoragePermission(mContext)) {
-                        mMainHandler.post {
-                            callBack.onError("have no storage permission")
-                        }
-                        Logger.e(TAG,"captureVideoStartInternal failed, have no storage permission")
-                        return
-                    }
-                }
             }
             if (! isCameraOpened()) {
                 Logger.e(TAG ,"capture video failed, camera not opened")

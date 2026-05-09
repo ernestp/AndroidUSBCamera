@@ -239,15 +239,6 @@ class CameraUVC(ctx: Context, device: UsbDevice) : MultiCameraClient.ICamera(ctx
         mSaveImageExecutor.submit {
             if (savePath.isNullOrEmpty()) {
                 File(mCameraDir).apply { if(!exists()) mkdirs() }
-                if (!MediaUtils.isAboveQ()) {
-                    if (!CameraUtils.hasStoragePermission(mContext)) {
-                        mMainHandler.post {
-                            callback.onError("have no storage permission")
-                        }
-                        Logger.e(TAG,"captureImageInternal failed, have no storage permission")
-                        return@submit
-                    }
-                }
             }
             if (! isPreviewed) {
                 mMainHandler.post {
