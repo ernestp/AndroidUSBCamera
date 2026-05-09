@@ -24,7 +24,6 @@ import com.jiangdg.ausbc.utils.CameraUtils
 import com.jiangdg.ausbc.utils.CameraUtils.isFilterDevice
 import com.jiangdg.ausbc.utils.CameraUtils.isUsbCamera
 import com.jiangdg.ausbc.utils.Logger
-import com.jiangdg.ausbc.utils.MediaUtils
 import com.jiangdg.ausbc.utils.OpenGLUtils
 import com.jiangdg.ausbc.utils.SettableFuture
 import com.jiangdg.ausbc.utils.Utils
@@ -423,6 +422,41 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                     }
                     captureStreamStopInternal()
                 }
+                MSG_UPDATE_PREVIEW_SIZE -> {
+                    // FIXME: 拆解延时，延时主要是等待[MSG_STOP_PREVIEW]和[MSG_GL_RELEASE]两个消息完成执行
+                    //  mCameraHandler?.obtainMessage(MSG_STOP_PREVIEW)?.sendToTarget() 拷贝代码解决
+                    //  mRenderHandler?.obtainMessage(MSG_GL_RELEASE)?.sendToTarget() 将mRenderManager?.stopRenderScreen()中的MSG_GL_RELEASE执行部分
+                    //  展开合并到新函数mRenderHandler?.releaseRenderScreen()
+                    (msg.obj as Pair<*, *>).apply {
+                        val width = first as Int
+                        val height = second as Int
+
+                        try {
+                            mSizeChangedFuture?.cancel(true)
+                            mSizeChangedFuture = null
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                        }
+                        closeCameraInternal()
+                        mRenderManager?.getCacheEffectList()?.apply {
+                            mCacheEffectList.clear()
+                            mCacheEffectList.addAll(this)
+                        }
+
+                        mRenderManager?.releaseRenderScreen()
+                        mRenderManager = null
+
+                        mCameraThread?.quitSafely()
+                        mCameraThread = null
+                        mCameraHandler = null
+
+                        mCameraRequest?.apply {
+                            previewWidth = width
+                            previewHeight = height
+                            openCamera(mCameraView, mCameraRequest)
+                        }
+                    }
+                }
             }
             return true
         }
@@ -802,12 +836,16 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
                     return@apply
                 }
                 Logger.i(TAG, "updateResolution: width = $width, height = $height")
-                closeCamera()
-                mMainHandler.postDelayed({
-                    previewWidth = width
-                    previewHeight = height
-                    openCamera(mCameraView, mCameraRequest)
-                }, 1000)
+//                closeCamera()
+//                mMainHandler.postDelayed({
+//                    previewWidth = width
+//                    previewHeight = height
+//                    openCamera(mCameraView, mCameraRequest)
+//                }, 1000)
+
+                Pair(width, height).apply {
+                    mCameraHandler?.obtainMessage(MSG_UPDATE_PREVIEW_SIZE, this)?.sendToTarget()
+                }
             }
         }
 
@@ -1025,6 +1063,7 @@ class MultiCameraClient(ctx: Context, callback: IDeviceConnectCallBack?) {
         private const val MSG_CAPTURE_VIDEO_STOP = 0x05
         private const val MSG_CAPTURE_STREAM_START = 0x06
         private const val MSG_CAPTURE_STREAM_STOP = 0x07
+        private const val MSG_UPDATE_PREVIEW_SIZE = 0x08
         private const val DEFAULT_PREVIEW_WIDTH = 640
         private const val DEFAULT_PREVIEW_HEIGHT = 480
         const val MAX_NV21_DATA = 5
