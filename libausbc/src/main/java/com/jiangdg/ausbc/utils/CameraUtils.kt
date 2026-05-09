@@ -114,11 +114,6 @@ object CameraUtils {
         return locPermission == PackageManager.PERMISSION_GRANTED
     }
 
-    fun hasStoragePermission(ctx: Context): Boolean{
-        val locPermission = ContextCompat.checkSelfPermission(ctx, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-        return locPermission == PackageManager.PERMISSION_GRANTED
-    }
-
     fun hasCameraPermission(ctx: Context): Boolean{
         val locPermission = ContextCompat.checkSelfPermission(ctx, Manifest.permission.CAMERA)
         return locPermission == PackageManager.PERMISSION_GRANTED

@@ -267,7 +267,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * Capture image
      *
      * @param callBack capture status, see [ICaptureCallBack]
-     * @param savePath custom image path
+     * @param savePath custom image path, use custom path no auto save to media store, but you can use MediaStoreUtils.saveMediaStore(file: File, context: Context)
      */
     protected fun captureImage(callBack: ICaptureCallBack, savePath: String? = null) {
         getCurrentCamera()?.captureImage(callBack, savePath)
@@ -392,7 +392,7 @@ abstract class CameraFragment : BaseFragment(), ICameraStateCallBack {
      * Capture video start
      *
      * @param callBack capture status, see [ICaptureCallBack]
-     * @param path custom save path
+     * @param path custom save path, use custom path no auto save to media store, but you can use MediaStoreUtils.saveMediaStore(file: File, context: Context)
      * @param durationInSec divided record duration time in seconds
      */
     protected fun captureVideoStart(callBack: ICaptureCallBack, path: String ?= null, durationInSec: Long = 0L) {
