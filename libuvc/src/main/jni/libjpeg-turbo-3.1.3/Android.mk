@@ -206,9 +206,20 @@ LOCAL_SRC_FILES += \
 	simd/x86_64/jquantf-sse2.asm \
 	simd/x86_64/jquanti-sse2.asm \
 	simd/x86_64/jchuff-sse2.asm \
+	simd/x86_64/jcphuff-sse2.asm \
+	simd/x86_64/jccolor-avx2.asm \
+	simd/x86_64/jcgray-avx2.asm \
+	simd/x86_64/jcsample-avx2.asm \
+	simd/x86_64/jdcolor-avx2.asm \
+	simd/x86_64/jdmerge-avx2.asm \
+	simd/x86_64/jdsample-avx2.asm \
+	simd/x86_64/jfdctint-avx2.asm \
+	simd/x86_64/jidctint-avx2.asm \
+	simd/x86_64/jquanti-avx2.asm \
 
 LOCAL_CFLAGS += -DSIZEOF_SIZE_T=8
 LOCAL_ASMFLAGS += -D__x86_64__
+LOCAL_ASMFLAGS += -I$(LOCAL_PATH)/simd/nasm -I$(LOCAL_PATH)/simd/x86_64
 
 else ifeq ($(TARGET_ARCH_ABI),x86)
 LOCAL_SRC_FILES += \
@@ -247,8 +258,19 @@ LOCAL_SRC_FILES += \
 	simd/i386/jquantf-sse2.asm \
 	simd/i386/jquanti-sse2.asm \
 	simd/i386/jchuff-sse2.asm \
+	simd/i386/jcphuff-sse2.asm \
+	simd/i386/jccolor-avx2.asm \
+	simd/i386/jcgray-avx2.asm \
+	simd/i386/jcsample-avx2.asm \
+	simd/i386/jdcolor-avx2.asm \
+	simd/i386/jdmerge-avx2.asm \
+	simd/i386/jdsample-avx2.asm \
+	simd/i386/jfdctint-avx2.asm \
+	simd/i386/jidctint-avx2.asm \
+	simd/i386/jquanti-avx2.asm \
 
 LOCAL_CFLAGS += -DSIZEOF_SIZE_T=4
+LOCAL_ASMFLAGS += -DPIC -I$(LOCAL_PATH)/simd/nasm -I$(LOCAL_PATH)/simd/i386
 
 endif
 
