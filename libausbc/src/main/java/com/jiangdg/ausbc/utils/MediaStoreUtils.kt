@@ -20,7 +20,7 @@ import kotlin.text.split
 object MediaStoreUtils {
     private const val TAG = "MediaStoreUtils"
 
-    fun saveMediaStore(file: File, context: Context) {
+    fun saveMediaStore(file: File, context: Context, onResult: ((String, Uri) -> Unit)? = null) {
         if (!file.exists()) throw Exception("no find file")
         val mimeType = MimeTypeMap.getSingleton()
             .getMimeTypeFromExtension(file.extension.lowercase(getDefault()))
@@ -53,12 +53,13 @@ object MediaStoreUtils {
                 context,
                 arrayOf(file.absolutePath),
                 arrayOf(mimeType)
-            ) { _, mediaUri ->
-                Log.d(TAG, "saveMediaStore success: $mediaUri")
+            ) { path, mediaUri ->
+                Log.d(TAG, "saveMediaStore success: path-$path mediaUri-$mediaUri")
+                onResult?.invoke(path, mediaUri)
             }
             return
         }
-        val mediaUri = createMediaUri(mimeType, file.name, context)
+        val (path, mediaUri) = createMediaUri(mimeType, file.name, context)
         context.contentResolver?.openOutputStream(mediaUri)?.use { outputStream ->
             FileInputStream(file).use { fileInputStream ->
                 val buffer = ByteArray(1024)
@@ -74,14 +75,17 @@ object MediaStoreUtils {
                 context,
                 arrayOf(mediaUri.path),
                 arrayOf(mimeType)
-            ) { _, mediaUri ->
-                Log.d(TAG, "saveMediaStore success: $mediaUri")
+            ) { path, mediaUri ->
+                Log.d(TAG, "saveMediaStore success: path-$path mediaUri-$mediaUri")
+                onResult?.invoke(path, mediaUri)
             }
+            return
         }
-        Log.d(TAG, "saveMediaStore success: $mediaUri")
+        Log.d(TAG, "saveMediaStore success: path-$path mediaUri-$mediaUri")
+        onResult?.invoke(path, mediaUri)
     }
 
-    private fun createMediaUri(mimeType: String, fileName: String, context: Context): Uri {
+    fun createMediaUri(mimeType: String, fileName: String, context: Context): Pair<String, Uri> {
         val relativePath = when {
             mimeType.startsWith("video") -> Environment.DIRECTORY_MOVIES
             mimeType.startsWith("audio") -> Environment.DIRECTORY_MUSIC
@@ -93,7 +97,7 @@ object MediaStoreUtils {
                 if (!exists()) mkdirs()
             }
             val file = File(appDir, fileName)
-            return Uri.fromFile(file)
+            return Pair(file.absolutePath, Uri.fromFile(file))
         }
         val contentUri = when {
             mimeType.startsWith("video") -> MediaStore.Video.Media.EXTERNAL_CONTENT_URI
@@ -105,6 +109,9 @@ object MediaStoreUtils {
             put(MediaStore.Images.Media.MIME_TYPE, mimeType)
             put(MediaStore.MediaColumns.RELATIVE_PATH, "${relativePath}/${context.packageName}")
         }
-        return context.contentResolver?.insert(contentUri, contentValues)!!
+        return Pair(
+            "${Environment.getExternalStoragePublicDirectory(relativePath)}/${context.packageName}/${fileName}",
+            context.contentResolver?.insert(contentUri, contentValues)!!
+        )
     }
 }
