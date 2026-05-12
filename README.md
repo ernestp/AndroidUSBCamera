@@ -318,7 +318,7 @@ dependencies {
 Demo
 -------
 
-&emsp;[AUSBC.apk](https://github.com/ernestp/AndroidUSBCamera/releases/download/3.4.5/ausbc-3.4.5.apk)
+&emsp;[AUSBC.apk](https://github.com/ernestp/AndroidUSBCamera/releases/latest)
 
 
 Version
