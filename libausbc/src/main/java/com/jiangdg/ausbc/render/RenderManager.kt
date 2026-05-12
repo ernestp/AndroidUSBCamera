@@ -282,6 +282,27 @@ class RenderManager(
     }
 
     /**
+     * Release render screen
+     * must run in main thread
+     */
+    fun releaseRenderScreen() {
+        EventBus.with<Boolean>(BusKey.KEY_RENDER_READY).postMessage(false)
+        mEffectList.forEach { effect ->
+            effect.releaseGLES()
+        }
+        mEffectList.clear()
+        mCameraRender?.releaseGLES()
+        mScreenRender?.releaseGLES()
+        mCaptureRender?.releaseGLES()
+        mCameraSurfaceTexture?.setOnFrameAvailableListener(null)
+        mCameraSurfaceTexture = null
+
+        mRenderThread?.quitSafely()
+        mRenderThread = null
+        mRenderHandler = null
+    }
+
+    /**
      * Start render codec
      *
      * @param inputSurface mediacodec input surface, see [android.media.MediaCodec]
